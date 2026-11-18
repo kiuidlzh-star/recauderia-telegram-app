@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecaudoApp - Admin Negocio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans pb-20">
+
+    <!-- Header -->
+    <header class="bg-emerald-600 text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
+        <div>
+            <h1 class="font-bold text-lg">🛒 RecaudoApp</h1>
+            <p id="user-greeting" class="text-xs text-emerald-100">Cargando usuario...</p>
+        </div>
+        <span id="current-date" class="text-xs bg-emerald-700 px-2.5 py-1 rounded-full"></span>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="p-4 max-w-md mx-auto space-y-6">
+
+        <!-- Sección de Resumen del Día -->
+        <section class="grid grid-cols-2 gap-3">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <p class="text-xs text-slate-500 font-medium">Ventas de Hoy</p>
+                <p id="total-ventas" class="text-xl font-extrabold text-emerald-600">$0.00</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <p class="text-xs text-slate-500 font-medium">Productos Activos</p>
+                <p id="total-productos" class="text-xl font-extrabold text-slate-700">0</p>
+            </div>
+        </section>
+
+        <!-- Pestañas de Navegación -->
+        <div class="flex bg-slate-200 p-1 rounded-xl text-sm font-medium">
+            <button onclick="switchTab('ventas')" id="btn-ventas" class="flex-1 py-2 rounded-lg bg-white shadow-sm text-emerald-600 transition">Vender</button>
+            <button onclick="switchTab('inventario')" id="btn-inventario" class="flex-1 py-2 rounded-lg text-slate-600 transition">Inventario</button>
+        </div>
+
+        <!-- Vista: Ventas (Caja rápida) -->
+        <div id="tab-ventas" class="space-y-4">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
+                <h2 class="font-bold text-sm text-slate-700">Registrar Venta Rápida</h2>
+                <div>
+                    <label class="text-xs text-slate-500 block mb-1">Seleccionar Producto</label>
+                    <select id="select-producto" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500">
+                        <!-- Opciones dinámicas -->
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 block mb-1">Cantidad</label>
+                    <input type="number" id="cantidad-venta" value="1" min="1" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500">
+                </div>
+                <button onclick="agregarAlCarrito()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg text-sm transition">
+                    Añadir a la Cuenta
+                </button>
+            </div>
+
+            <!-- Ticket Actual -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
+                <h3 class="font-bold text-sm text-slate-700">Ticket Actual</h3>
+                <div id="lista-carrito" class="divide-y divide-slate-100 max-h-40 overflow-y-auto text-sm">
+                    <p class="text-slate-400 text-xs text-center py-4">No hay productos en el ticket</p>
+                </div>
+                <div class="border-t pt-2 flex justify-between font-bold text-base">
+                    <span>Total:</span>
+                    <span id="ticket-total" class="text-emerald-600">$0.00</span>
+                </div>
+                <button onclick="finalizarVenta()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg text-sm transition">
+                    Cobrar y Guardar Venta
+                </button>
+            </div>
+        </div>
+
+        <!-- Vista: Inventario -->
+        <div id="tab-inventario" class="space-y-4 hidden">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
+                <h2 class="font-bold text-sm text-slate-700">Agregar Nuevo Producto</h2>
+                <input type="text" id="nuevo-nombre" placeholder="Nombre del producto (ej. Jitomate kg)" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="nuevo-precio" placeholder="Precio ($)" step="0.50" class="p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg">
+                    <input type="number" id="nuevo-stock" placeholder="Stock inicial" class="p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg">
+                </div>
+                <button onclick="agregarProducto()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg text-sm transition">
+                    Guardar Producto
+                </button>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
+                <h3 class="font-bold text-sm text-slate-700">Lista de Productos</h3>
+                <div id="lista-inventario" class="space-y-2 max-h-60 overflow-y-auto text-sm">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Script de Lógica -->
+    <script>
+        // Inicializar Telegram WebApp
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            document.getElementById('user-greeting').innerText = `Hola, ${tg.initDataUnsafe.user.first_name} 👋`;
+        } else {
+            document.getElementById('user-greeting').innerText = `Modo Administrador 👨‍💼`;
+        }
+
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString();
+
+        // Datos iniciales simulados (puedes conectarlos a una base de datos después)
+        let inventario = [
+            { id: 1, nombre: 'Jitomate (kg)', precio: 28.00, stock: 15 },
+            { id: 2, nombre: 'Cebolla blanca (kg)', precio: 24.00, stock: 20 },
+            { id: 3, nombre: 'Huevos (Docena)', precio: 42.00, stock: 10 }
+        ];
+
+        let carrito = [];
+        let totalVentasHoy = 0;
+
+        function switchTab(tab) {
+            if(tab === 'ventas') {
+                document.getElementById('tab-ventas').classList.remove('hidden');
+                document.getElementById('tab-inventario').classList.add('hidden');
+                document.getElementById('btn-ventas').className = "flex-1 py-2 rounded-lg bg-white shadow-sm text-emerald-600 transition";
+                document.getElementById('btn-inventario').className = "flex-1 py-2 rounded-lg text-slate-600 transition";
+            } else {
+                document.getElementById('tab-ventas').classList.add('hidden');
+                document.getElementById('tab-inventario').classList.remove('hidden');
+                document.getElementById('btn-inventario').className = "flex-1 py-2 rounded-lg bg-white shadow-sm text-emerald-600 transition";
+                document.getElementById('btn-ventas').className = "flex-1 py-2 rounded-lg text-slate-600 transition";
+            }
+        }
+
+        function actualizarSelects() {
+            const select = document.getElementById('select-producto');
+            select.innerHTML = '';
+            inventario.forEach(p => {
+                let opt = document.createElement('option');
+                opt.value = p.id;
+                opt.innerText = `${p.nombre} - $${p.precio.toFixed(2)} (Stock: ${p.stock})`;
+                select.appendChild(opt);
+            });
+            document.getElementById('total-productos').innerText = inventario.length;
+        }
+
+        function renderInventario() {
+            const contenedor = document.getElementById('lista-inventario');
+            contenedor.innerHTML = '';
+            inventario.forEach(p => {
+                contenedor.innerHTML += `
+                    <div class="flex justify-between items-center p-2 bg-slate-50 rounded-lg border border-slate-100">
+                        <div>
+                            <p class="font-medium text-slate-800">${p.nombre}</p>
+                            <p class="text-xs text-slate-500">$${p.precio.toFixed(2)} | Stock: ${p.stock}</p>
+                        </div>
+                        <button onclick="eliminarProducto(${p.id})" class="text-red-500 text-xs font-semibold px-2 py-1 bg-red-50 rounded hover:bg-red-100">Eliminar</button>
+                    </div>
+                `;
+            });
+            actualizarSelects();
+        }
+
+        function agregarProducto() {
+            let nombre = document.getElementById('nuevo-nombre').value;
+            let precio = parseFloat(document.getElementById('nuevo-precio').value);
+            let stock = parseInt(document.getElementById('nuevo-stock').value);
+
+            if(!nombre || isNaN(precio) || isNaN(stock)) {
+                alert('Por favor completa todos los campos correctamente.');
+                return;
+            }
+
+            inventario.push({ id: Date.now(), nombre, precio, stock });
+            document.getElementById('nuevo-nombre').value = '';
+            document.getElementById('nuevo-precio').value = '';
+            document.getElementById('nuevo-stock').value = '';
+            renderInventario();
+            alert('Producto agregado con éxito');
+        }
+
+        function eliminarProducto(id) {
+            inventario = inventario.filter(p => p.id !== id);
+            renderInventario();
+        }
+
+        function agregarAlCarrito() {
+            let idProd = parseInt(document.getElementById('select-producto').value);
+            let cantidad = parseInt(document.getElementById('cantidad-venta').value);
+
+            let producto = inventario.find(p => p.id === idProd);
+            if (!producto || producto.stock < cantidad) {
+                alert('Stock insuficiente o producto no válido.');
+                return;
+            }
+
+            carrito.push({ ...producto, cantidad });
+            renderCarrito();
+        }
+
+        function renderCarrito() {
+            const contenedor = document.getElementById('lista-carrito');
+            if(carrito.length === 0) {
+                contenedor.innerHTML = `<p class="text-slate-400 text-xs text-center py-4">No hay productos en el ticket</p>`;
+                document.getElementById('ticket-total').innerText = '$0.00';
+                return;
+            }
+
+            contenedor.innerHTML = '';
+            let total = 0;
+            carrito.forEach((item, index) => {
+                let subtotal = item.precio * item.cantidad;
+                total += subtotal;
+                contenedor.innerHTML += `
+                    <div class="flex justify-between items-center py-1.5">
+                        <span>${-item.cantidad}x ${item.nombre}</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-medium">$${subtotal.toFixed(2)}</span>
+                            <button onclick="carrito.splice(${index}, 1); renderCarrito();" class="text-red-400 text-xs font-bold">×</button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('ticket-total').innerText = `$${total.toFixed(2)}`;
+        }
+
+        function finalizarVenta() {
+            if(carrito.length === 0) {
+                alert('El ticket está vacío.');
+                return;
+            }
+
+            let totalVenta = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+            
+            // Descontar stock
+            carrito.forEach(item => {
+                let p = inventario.find(inv => inv.id === item.id);
+                if(p) p.stock -= item.cantidad;
+            });
+
+            totalVentasHoy += totalVenta;
+            document.getElementById('total-ventas').innerText = `$${totalVentasHoy.toFixed(2)}`;
+
+            // Enviar datos de vuelta a Telegram si se desea (opcional)
+            if(tg.initData) {
+                // Puedes enviar datos al bot de telegram aquí si configuras un backend
+            }
+
+            alert(`¡Venta registrada con éxito por $${totalVenta.toFixed(2)}!`);
+            carrito = [];
+            renderCarrito();
+            renderInventario();
+        }
+
+        // Inicializar vista
+        renderInventario();
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "recauderia-telegram-app",
+  "version": "1.0.0",
+  "description": "Mini app de negocio para Telegram",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
