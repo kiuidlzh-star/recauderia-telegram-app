@@ -9,7 +9,7 @@
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans pb-20">
+<body class="bg-slate-50 text-slate-800 font-sans pb-24 select-none">
 
     <!-- Header -->
     <header class="bg-emerald-600 text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
@@ -21,78 +21,83 @@
     </header>
 
     <!-- Contenedor Principal -->
-    <main class="p-4 max-w-md mx-auto space-y-6">
+    <main class="p-4 max-w-md mx-auto space-y-5">
 
         <!-- Sección de Resumen del Día -->
         <section class="grid grid-cols-2 gap-3">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-100">
                 <p class="text-xs text-slate-500 font-medium">Ventas de Hoy</p>
                 <p id="total-ventas" class="text-xl font-extrabold text-emerald-600">$0.00</p>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-100">
                 <p class="text-xs text-slate-500 font-medium">Productos Activos</p>
                 <p id="total-productos" class="text-xl font-extrabold text-slate-700">0</p>
             </div>
         </section>
 
-        <!-- Pestañas de Navegación -->
-        <div class="flex bg-slate-200 p-1 rounded-xl text-sm font-medium">
-            <button onclick="switchTab('ventas')" id="btn-ventas" class="flex-1 py-2 rounded-lg bg-white shadow-sm text-emerald-600 transition">Vender</button>
-            <button onclick="switchTab('inventario')" id="btn-inventario" class="flex-1 py-2 rounded-lg text-slate-600 transition">Inventario</button>
+        <!-- Navegación Superior (Solo Emojis) -->
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="switchTab('ventas')" id="btn-ventas" title="Ventas" class="aspect-[2/1] bg-emerald-600 text-white rounded-2xl shadow-md flex items-center justify-center text-4xl transition active:scale-95">
+                💰
+            </button>
+            <button onclick="switchTab('inventario')" id="btn-inventario" title="Inventario" class="aspect-[2/1] bg-white text-slate-700 border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center text-4xl transition active:scale-95">
+                📦
+            </button>
         </div>
 
-        <!-- Vista: Ventas (Caja rápida) -->
+        <!-- Vista: Ventas (Cuadrícula 3 columnas con Emojis) -->
         <div id="tab-ventas" class="space-y-4">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
-                <h2 class="font-bold text-sm text-slate-700">Registrar Venta Rápida</h2>
-                <div>
-                    <label class="text-xs text-slate-500 block mb-1">Seleccionar Producto</label>
-                    <select id="select-producto" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500">
-                        <!-- Opciones dinámicas -->
-                    </select>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-sm text-slate-700">Toca para agregar</h2>
+                    <span class="text-xs text-slate-400">1 toque = +1 unidad</span>
                 </div>
-                <div>
-                    <label class="text-xs text-slate-500 block mb-1">Cantidad</label>
-                    <input type="number" id="cantidad-venta" value="1" min="1" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500">
+                
+                <!-- Cuadrícula 3xN (se expande automáticamente) -->
+                <div id="grid-productos" class="grid grid-cols-3 gap-2.5 max-h-80 overflow-y-auto p-1">
+                    <!-- Cuadrados generados dinámicamente -->
                 </div>
-                <button onclick="agregarAlCarrito()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg text-sm transition">
-                    Añadir a la Cuenta
-                </button>
             </div>
 
             <!-- Ticket Actual -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
-                <h3 class="font-bold text-sm text-slate-700">Ticket Actual</h3>
-                <div id="lista-carrito" class="divide-y divide-slate-100 max-h-40 overflow-y-auto text-sm">
-                    <p class="text-slate-400 text-xs text-center py-4">No hay productos en el ticket</p>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-sm text-slate-700">🧾 Ticket Actual</h3>
+                    <button onclick="vaciarCarrito()" class="text-xs text-red-500 font-medium">Limpiar</button>
                 </div>
-                <div class="border-t pt-2 flex justify-between font-bold text-base">
+                <div id="lista-carrito" class="divide-y divide-slate-100 max-h-40 overflow-y-auto text-sm">
+                    <p class="text-slate-400 text-xs text-center py-4">Toca un producto arriba para comenzar</p>
+                </div>
+                <div class="border-t pt-2.5 flex justify-between items-center font-bold text-lg">
                     <span>Total:</span>
                     <span id="ticket-total" class="text-emerald-600">$0.00</span>
                 </div>
-                <button onclick="finalizarVenta()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg text-sm transition">
-                    Cobrar y Guardar Venta
+                <button onclick="finalizarVenta()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl text-2xl transition active:scale-95 flex items-center justify-center">
+                    ✅
                 </button>
             </div>
         </div>
 
         <!-- Vista: Inventario -->
         <div id="tab-inventario" class="space-y-4 hidden">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <h2 class="font-bold text-sm text-slate-700">Agregar Nuevo Producto</h2>
-                <input type="text" id="nuevo-nombre" placeholder="Nombre del producto (ej. Jitomate kg)" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg">
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="number" id="nuevo-precio" placeholder="Precio ($)" step="0.50" class="p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg">
-                    <input type="number" id="nuevo-stock" placeholder="Stock inicial" class="p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg">
+                <div class="flex gap-2">
+                    <input type="text" id="nuevo-emoji" placeholder="🍅" maxlength="2" class="w-16 p-2.5 text-center text-2xl bg-slate-50 border border-slate-200 rounded-xl">
+                    <input type="text" id="nuevo-nombre" placeholder="Nombre (ej. Jitomate kg)" class="flex-1 p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl">
                 </div>
-                <button onclick="agregarProducto()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg text-sm transition">
-                    Guardar Producto
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="nuevo-precio" placeholder="Precio ($)" step="0.50" class="p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl">
+                    <input type="number" id="nuevo-stock" placeholder="Stock inicial" class="p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl">
+                </div>
+                <button onclick="agregarProducto()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl text-2xl transition active:scale-95">
+                    ➕
                 </button>
             </div>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <h3 class="font-bold text-sm text-slate-700">Lista de Productos</h3>
-                <div id="lista-inventario" class="space-y-2 max-h-60 overflow-y-auto text-sm">
+                <div id="lista-inventario" class="space-y-2 max-h-72 overflow-y-auto text-sm">
                     <!-- Dinámico -->
                 </div>
             </div>
@@ -102,7 +107,6 @@
 
     <!-- Script de Lógica -->
     <script>
-        // Inicializar Telegram WebApp
         let tg = window.Telegram.WebApp;
         tg.expand();
 
@@ -114,38 +118,63 @@
 
         document.getElementById('current-date').innerText = new Date().toLocaleDateString();
 
-        // Datos iniciales simulados (puedes conectarlos a una base de datos después)
+        // Inventario de ejemplo ampliado (12 productos = 4 filas de 3) para probar la cuadrícula
         let inventario = [
-            { id: 1, nombre: 'Jitomate (kg)', precio: 28.00, stock: 15 },
-            { id: 2, nombre: 'Cebolla blanca (kg)', precio: 24.00, stock: 20 },
-            { id: 3, nombre: 'Huevos (Docena)', precio: 42.00, stock: 10 }
+            { id: 1, emoji: '🍅', nombre: 'Jitomate (kg)', precio: 28.00, stock: 15 },
+            { id: 2, emoji: '🧅', nombre: 'Cebolla (kg)', precio: 24.00, stock: 20 },
+            { id: 3, emoji: '🥚', nombre: 'Huevos (Doc)', precio: 42.00, stock: 10 },
+            { id: 4, emoji: '🥔', nombre: 'Papa (kg)', precio: 30.00, stock: 18 },
+            { id: 5, emoji: '🥑', nombre: 'Aguacate (kg)', precio: 65.00, stock: 8 },
+            { id: 6, emoji: '🍋', nombre: 'Limón (kg)', precio: 32.00, stock: 12 },
+            { id: 7, emoji: '🍌', nombre: 'Plátano (kg)', precio: 22.00, stock: 14 },
+            { id: 8, emoji: '🍎', nombre: 'Manzana (kg)', precio: 45.00, stock: 10 },
+            { id: 9, emoji: '🥕', nombre: 'Zanahoria (kg)', precio: 18.00, stock: 25 },
+            { id: 10, emoji: '🌶️', nombre: 'Chile Serrano', precio: 38.00, stock: 9 },
+            { id: 11, emoji: '🧄', nombre: 'Ajo (pieza)', precio: 10.00, stock: 30 },
+            { id: 12, emoji: '🥬', nombre: 'Lechuga', precio: 16.00, stock: 12 }
         ];
 
         let carrito = [];
         let totalVentasHoy = 0;
 
         function switchTab(tab) {
-            if(tab === 'ventas') {
+            const btnVentas = document.getElementById('btn-ventas');
+            const btnInv = document.getElementById('btn-inventario');
+
+            if (tab === 'ventas') {
                 document.getElementById('tab-ventas').classList.remove('hidden');
                 document.getElementById('tab-inventario').classList.add('hidden');
-                document.getElementById('btn-ventas').className = "flex-1 py-2 rounded-lg bg-white shadow-sm text-emerald-600 transition";
-                document.getElementById('btn-inventario').className = "flex-1 py-2 rounded-lg text-slate-600 transition";
+                btnVentas.className = "aspect-[2/1] bg-emerald-600 text-white rounded-2xl shadow-md flex items-center justify-center text-4xl transition active:scale-95";
+                btnInv.className = "aspect-[2/1] bg-white text-slate-700 border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center text-4xl transition active:scale-95";
             } else {
                 document.getElementById('tab-ventas').classList.add('hidden');
                 document.getElementById('tab-inventario').classList.remove('hidden');
-                document.getElementById('btn-inventario').className = "flex-1 py-2 rounded-lg bg-white shadow-sm text-emerald-600 transition";
-                document.getElementById('btn-ventas').className = "flex-1 py-2 rounded-lg text-slate-600 transition";
+                btnInv.className = "aspect-[2/1] bg-emerald-600 text-white rounded-2xl shadow-md flex items-center justify-center text-4xl transition active:scale-95";
+                btnVentas.className = "aspect-[2/1] bg-white text-slate-700 border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center text-4xl transition active:scale-95";
             }
         }
 
-        function actualizarSelects() {
-            const select = document.getElementById('select-producto');
-            select.innerHTML = '';
+        function renderGridProductos() {
+            const grid = document.getElementById('grid-productos');
+            grid.innerHTML = '';
+            
             inventario.forEach(p => {
-                let opt = document.createElement('option');
-                opt.value = p.id;
-                opt.innerText = `${p.nombre} - $${p.precio.toFixed(2)} (Stock: ${p.stock})`;
-                select.appendChild(opt);
+                const sinStock = p.stock <= 0;
+                grid.innerHTML += `
+                    <button 
+                        onclick="agregarAlCarritoRapido(${p.id})" 
+                        ${sinStock ? 'disabled' : ''}
+                        title="${p.nombre} - $${p.precio.toFixed(2)}"
+                        class="relative aspect-square rounded-2xl border ${sinStock ? 'bg-slate-100 border-slate-200 opacity-40' : 'bg-slate-50 hover:bg-emerald-50 border-slate-200 hover:border-emerald-400 active:scale-90'} flex items-center justify-center text-4xl shadow-sm transition">
+                        ${p.emoji}
+                        <span class="absolute bottom-1 right-1.5 text-[10px] font-bold text-slate-500 bg-white/80 px-1 rounded">
+                            $${p.precio}
+                        </span>
+                        <span class="absolute top-1 left-1.5 text-[10px] font-semibold ${p.stock <= 3 ? 'text-red-500' : 'text-slate-400'}">
+                            ${p.stock}
+                        </span>
+                    </button>
+                `;
             });
             document.getElementById('total-productos').innerText = inventario.length;
         }
@@ -155,34 +184,38 @@
             contenedor.innerHTML = '';
             inventario.forEach(p => {
                 contenedor.innerHTML += `
-                    <div class="flex justify-between items-center p-2 bg-slate-50 rounded-lg border border-slate-100">
-                        <div>
-                            <p class="font-medium text-slate-800">${p.nombre}</p>
-                            <p class="text-xs text-slate-500">$${p.precio.toFixed(2)} | Stock: ${p.stock}</p>
+                    <div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-2xl">${p.emoji}</span>
+                            <div>
+                                <p class="font-medium text-slate-800">${p.nombre}</p>
+                                <p class="text-xs text-slate-500">$${p.precio.toFixed(2)} | Stock: ${p.stock}</p>
+                            </div>
                         </div>
-                        <button onclick="eliminarProducto(${p.id})" class="text-red-500 text-xs font-semibold px-2 py-1 bg-red-50 rounded hover:bg-red-100">Eliminar</button>
+                        <button onclick="eliminarProducto(${p.id})" class="text-lg p-1.5 bg-red-50 rounded-lg hover:bg-red-100">🗑️</button>
                     </div>
                 `;
             });
-            actualizarSelects();
+            renderGridProductos();
         }
 
         function agregarProducto() {
-            let nombre = document.getElementById('nuevo-nombre').value;
+            let emoji = document.getElementById('nuevo-emoji').value.trim() || '📦';
+            let nombre = document.getElementById('nuevo-nombre').value.trim();
             let precio = parseFloat(document.getElementById('nuevo-precio').value);
             let stock = parseInt(document.getElementById('nuevo-stock').value);
 
-            if(!nombre || isNaN(precio) || isNaN(stock)) {
-                alert('Por favor completa todos los campos correctamente.');
+            if (!nombre || isNaN(precio) || isNaN(stock)) {
+                alert('Completa nombre, precio y stock.');
                 return;
             }
 
-            inventario.push({ id: Date.now(), nombre, precio, stock });
+            inventario.push({ id: Date.now(), emoji, nombre, precio, stock });
+            document.getElementById('nuevo-emoji').value = '';
             document.getElementById('nuevo-nombre').value = '';
             document.getElementById('nuevo-precio').value = '';
             document.getElementById('nuevo-stock').value = '';
             renderInventario();
-            alert('Producto agregado con éxito');
         }
 
         function eliminarProducto(id) {
@@ -190,24 +223,41 @@
             renderInventario();
         }
 
-        function agregarAlCarrito() {
-            let idProd = parseInt(document.getElementById('select-producto').value);
-            let cantidad = parseInt(document.getElementById('cantidad-venta').value);
-
+        function agregarAlCarritoRapido(idProd) {
             let producto = inventario.find(p => p.id === idProd);
-            if (!producto || producto.stock < cantidad) {
-                alert('Stock insuficiente o producto no válido.');
+            if (!producto) return;
+
+            let enCarrito = carrito.find(item => item.id === idProd);
+            let cantidadActual = enCarrito ? enCarrito.cantidad : 0;
+
+            if (producto.stock <= cantidadActual) {
+                alert(`Sin más stock de ${producto.nombre}`);
                 return;
             }
 
-            carrito.push({ ...producto, cantidad });
+            if (enCarrito) {
+                enCarrito.cantidad += 1;
+            } else {
+                carrito.push({ ...producto, cantidad: 1 });
+            }
+
+            // Vibración háptica suave en Telegram si está disponible
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+
+            renderCarrito();
+        }
+
+        function vaciarCarrito() {
+            carrito = [];
             renderCarrito();
         }
 
         function renderCarrito() {
             const contenedor = document.getElementById('lista-carrito');
-            if(carrito.length === 0) {
-                contenedor.innerHTML = `<p class="text-slate-400 text-xs text-center py-4">No hay productos en el ticket</p>`;
+            if (carrito.length === 0) {
+                contenedor.innerHTML = `<p class="text-slate-400 text-xs text-center py-4">Toca un producto arriba para comenzar</p>`;
                 document.getElementById('ticket-total').innerText = '$0.00';
                 return;
             }
@@ -218,11 +268,15 @@
                 let subtotal = item.precio * item.cantidad;
                 total += subtotal;
                 contenedor.innerHTML += `
-                    <div class="flex justify-between items-center py-1.5">
-                        <span>${-item.cantidad}x ${item.nombre}</span>
+                    <div class="flex justify-between items-center py-2">
+                        <span class="flex items-center gap-1.5">
+                            <span class="text-lg">${item.emoji}</span>
+                            <span class="font-semibold text-emerald-700">${item.cantidad}x</span>
+                            <span>${item.nombre}</span>
+                        </span>
                         <div class="flex items-center space-x-2">
-                            <span class="font-medium">$${subtotal.toFixed(2)}</span>
-                            <button onclick="carrito.splice(${index}, 1); renderCarrito();" class="text-red-400 text-xs font-bold">×</button>
+                            <span class="font-bold">$${subtotal.toFixed(2)}</span>
+                            <button onclick="carrito.splice(${index}, 1); renderCarrito();" class="text-red-400 text-sm font-bold px-1.5">✖️</button>
                         </div>
                     </div>
                 `;
@@ -231,34 +285,28 @@
         }
 
         function finalizarVenta() {
-            if(carrito.length === 0) {
-                alert('El ticket está vacío.');
-                return;
-            }
+            if (carrito.length === 0) return;
 
             let totalVenta = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
             
-            // Descontar stock
             carrito.forEach(item => {
                 let p = inventario.find(inv => inv.id === item.id);
-                if(p) p.stock -= item.cantidad;
+                if (p) p.stock -= item.cantidad;
             });
 
             totalVentasHoy += totalVenta;
             document.getElementById('total-ventas').innerText = `$${totalVentasHoy.toFixed(2)}`;
 
-            // Enviar datos de vuelta a Telegram si se desea (opcional)
-            if(tg.initData) {
-                // Puedes enviar datos al bot de telegram aquí si configuras un backend
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
             }
 
-            alert(`¡Venta registrada con éxito por $${totalVenta.toFixed(2)}!`);
+            alert(`¡Venta cobrada por $${totalVenta.toFixed(2)}!`);
             carrito = [];
             renderCarrito();
             renderInventario();
         }
 
-        // Inicializar vista
         renderInventario();
     </script>
 </body>
